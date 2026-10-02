@@ -1,17 +1,17 @@
-# 🦾 Evaluador Kinemático de ROM de Hombro en Navegador
+# Evaluador Kinemático de ROM de Hombro en Navegador
 
 Aplicación web interactiva para la evaluación cinemática del Rango de Movimiento (ROM) activo de hombro en los planos de **abducción** y **flexión**. Implementa detección de poses mediante visión por computadora en tiempo real utilizando la librería MediaPipe Pose directamente en el navegador (*Client-Side Processing*).
 
 ---
 
-## 🔗 Demo en Vivo y Enlace Público
+## Demo en Vivo y Enlace Público
 
 - **Aplicación Web Desplegada:** [https://evaluador-rom.vercel.app] (https://evaluador-rom.vercel.app)
 - **Repositorio de Código:** [https://github.com/yaranacollao-spec/evaluador-rom]
 
 ---
 
-## 📌 Características Principales
+## Características Principales
 
 - **Procesamiento Local (Privacidad Garantizada):** El video de la cámara web se procesa 100% en el cliente mediante WebAssembly y WebGL. Ningún dato audiovisual es enviado a servidores externos.
 - **Cálculo Vectorial Dinámico:** Determinación matemática continua del ángulo formado por los landmarks de la articulación glenohumeral y la cadena biomecánica: **Cadera $\rightarrow$ Hombro $\rightarrow$ Codo**.
@@ -23,7 +23,7 @@ Aplicación web interactiva para la evaluación cinemática del Rango de Movimie
 
 ---
 
-## 📐 Lógica del Procesamiento Kinemático
+## Lógica del Procesamiento Kinemático
 
 La extracción de puntos clave (*landmarks*) utiliza el modelo de MediaPipe Pose:
 
@@ -38,7 +38,7 @@ $$\theta = \arccos\left( \frac{\vec{u} \cdot \vec{v}}{\Vert{}\vec{u}\Vert{} \Ver
 
 ---
 
-## 💻 Requisitos y Dependencias
+## Requisitos y Dependencias
 
 Para la ejecución de la plataforma no se requiere instalación previa de entornos de desarrollo complejos, ya que todas las dependencias son importadas vía CDN:
 
@@ -51,7 +51,7 @@ Para la ejecución de la plataforma no se requiere instalación previa de entorn
 
 ---
 
-## 📖 Guía de Uso Clínico
+## Guía de Uso Clínico
 
 1. **Inclusión del Paciente:** Colocar al paciente/sujeto a una distancia de entre **1.5 y 2.0 metros** frente a la cámara de la tablet/computadora.
 2. **Plano de Evaluación:**
@@ -60,4 +60,4 @@ Para la ejecución de la plataforma no se requiere instalación previa de entorn
 3. **Inicio de la Prueba:** Abrir la web y aceptar los permisos de uso de la cámara.
 4. **Ejecución del Movimiento:** Realizar la elevación máxima del brazo de forma pausada.
 5. **Lectura de Resultados:** Observar el valor máximo en la casilla **ROM Máximo** y analizar la fluidez de la curva angular en la gráfica inferior.
-6. **Reinicio:** Presionar el botón **Reiniciar Peak** para comenzar una nueva repetición o evaluar el brazo contralateral.
+6. **Reinicio:** Presionar el botón **Reiniciar Peak** para comenzar una nueva repetición o evaluar el brazo contra lateral.
