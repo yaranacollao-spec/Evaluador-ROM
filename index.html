@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evaluador ROM Hombro</title>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; background: #f2f2f7; margin: 0; padding: 15px; }
+    h1 { color: #1c1c1e; text-align: center; font-size: 1.5rem; }
+    .dashboard { display: flex; flex-direction: column; gap: 15px; max-width: 900px; margin: 0 auto; }
+    .video-container { position: relative; background: #000; border-radius: 12px; overflow: hidden; width: 100%; }
+    video, canvas { width: 100%; height: auto; display: block; }
+    canvas { position: absolute; top: 0; left: 0; }
+    .metrics-panel { display: flex; gap: 10px; justify-content: space-between; }
+    .metric-box { flex: 1; background: #fff; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .metric-value { font-size: 2rem; font-weight: bold; color: #007aff; margin-top: 5px; }
+    .chart-container { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    button { width: 100%; padding: 12px; background: #ff3b30; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+  <h1>Evaluador Kinemático de ROM - Hombro</h1>
+
+  <div class="dashboard">
+    <div class="video-container">
+      <video id="webcam" autoplay playsinline></video>
+      <canvas id="output_canvas"></canvas>
+    </div>
+
+    <div class="metrics-panel">
+      <div class="metric-box">
+        <span style="font-size:0.9rem; color:#8e8e93;">Ángulo Actual</span>
+        <div id="current-angle" class="metric-value">0°</div>
+      </div>
+      <div class="metric-box">
+        <span style="font-size:0.9rem; color:#8e8e93;">ROM Máximo</span>
+        <div id="peak-angle" class="metric-value" style="color: #34c759;">0°</div>
+      </div>
+    </div>
+
+    <button onclick="resetPeak()">Reiniciar Peak</button>
+
+    <div class="chart-container">
+      <canvas id="romChart" height="120"></canvas>
+    </div>
+  </div>
+
+  <script>
+    const videoElement = document.getElementById('webcam');
+    const canvasElement = document.getElementById('output_canvas');
+    const canvasCtx = canvasElement.getContext('2d');
+    const currentAngleEl = document.getElementById('current-angle');
+    const peakAngleEl = document.getElementById('peak-angle');
+
+    let maxAngle = 0;
+    let frameCount = 0;
+
+    const ctxChart = document.getElementById('romChart').getContext('2d');
+    const romChart = new Chart(ctxChart, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Ángulo (°)', data: [], borderColor: '#007aff', fill: false, tension: 0.2 }] },
+      options: { animation: false, scales: { y: { min: 0, max: 180 } } }
+    });
+
+    function calculateAngle(A, B, C) {
+      const u = { x: A.x - B.x, y: A.y - B.y };
+      const v = { x: C.x - B.x, y: C.y - B.y };
+      const dot = u.x * v.x + u.y * v.y;
+      const magU = Math.sqrt(u.x * u.x + u.y * u.y);
+      const magV = Math.sqrt(v.x * v.x + v.y * v.y);
+      if (magU * magV === 0) return 0;
+      const cosTheta = Math.max(-1, Math.min(1, dot / (magU * magV)));
+      return Math.acos(cosTheta) * (180 / Math.PI);
+    }
+
+    function onResults(results) {
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+      canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+      if (results.poseLandmarks) {
+        const shoulder = results.poseLandmarks[11]; // Hombro Izquierdo
+        const hip = results.poseLandmarks[23];      // Cadera Izquierda
+        const elbow = results.poseLandmarks[13];    // Codo Izquierdo
+
+        if (shoulder.visibility > 0.5 && hip.visibility > 0.5 && elbow.visibility > 0.5) {
+          const angle = Math.round(calculateAngle(hip, shoulder, elbow));
+          
+          currentAngleEl.innerText = angle + '°';
+          if (angle > maxAngle) {
+            maxAngle = angle;
+            peakAngleEl.innerText = maxAngle + '°';
+          }
+
+          canvasCtx.beginPath();
+          canvasCtx.moveTo(hip.x * canvasElement.width, hip.y * canvasElement.height);
+          canvasCtx.lineTo(shoulder.x * canvasElement.width, shoulder.y * canvasElement.height);
+          canvasCtx.lineTo(elbow.x * canvasElement.width, elbow.y * canvasElement.height);
+          canvasCtx.strokeStyle = '#30d158';
+          canvasCtx.lineWidth = 5;
+          canvasCtx.stroke();
+
+          frameCount++;
+          if (frameCount % 3 === 0) {
+            romChart.data.labels.push('');
+            romChart.data.datasets[0].data.push(angle);
+            if (romChart.data.labels.length > 40) {
+              romChart.data.labels.shift();
+              romChart.data.datasets[0].data.shift();
+            }
+            romChart.update();
+          }
+        }
+      }
+    }
+
+    const pose = new Pose({
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+    });
+    pose.setOptions({ modelComplexity: 1, smoothLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+    pose.onResults(onResults);
+
+    const camera = new Camera(videoElement, {
+      onFrame: async () => { await pose.send({ image: videoElement }); },
+      width: 640, height: 480
+    });
+    camera.start();
+
+    function resetPeak() { maxAngle = 0; peakAngleEl.innerText = '0°'; }
+  </script>
+</body>
+</html>
