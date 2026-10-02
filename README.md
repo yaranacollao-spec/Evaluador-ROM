@@ -6,7 +6,7 @@ Aplicación web interactiva para la evaluación cinemática del Rango de Movimie
 
 ## Demo en Vivo y Enlace Público
 
-- **Aplicación Web Desplegada:** [https://evaluador-rom.vercel.app] (https://evaluador-rom.vercel.app)
+- **Aplicación Web Desplegada:** [https://evaluador-rom.vercel.app] 
 - **Repositorio de Código:** [https://github.com/yaranacollao-spec/evaluador-rom]
 
 ---
