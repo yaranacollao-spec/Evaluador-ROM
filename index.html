@@ -146,7 +146,14 @@
       width: 640, height: 480
     });
     camera.start();
-
+// FORZAR PERMISO DE CÁMARA
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then((stream) => {
+    console.log("Cámara permitida");
+  })
+  .catch((err) => {
+    alert("Para usar esta app debes permitir el acceso a la cámara en el candado del navegador.");
+  });
     function resetPeak() { maxAngle = 0; peakAngleEl.innerText = '0°'; }
   </script>
 </body>
