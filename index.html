@@ -28,7 +28,7 @@
   <div class="dashboard">
     <div class="video-container">
       <video id="webcam" autoplay playsinline></video>
-      <canvas id="output_canvas"></canvas>
+      <canvas id="output_canvas" style="transform: scaleX(-1);"></canvas>
     </div>
 
     <div class="metrics-panel">
@@ -82,20 +82,37 @@
       canvasElement.height = videoElement.videoHeight;
       canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
 
-      if (results.poseLandmarks) {
-        const shoulder = results.poseLandmarks[11]; // Hombro Izquierdo
-        const hip = results.poseLandmarks[23];      // Cadera Izquierda
-        const elbow = results.poseLandmarks[13];    // Codo Izquierdo
+     // Detectar ambos lados (Derecho: 12, 14, 24 / Izquierdo: 11, 13, 23)
+    const rShoulder = results.poseLandmarks[12];
+    const rElbow = results.poseLandmarks[14];
+    const rHip = results.poseLandmarks[24];
 
-        if (shoulder.visibility > 0.5 && hip.visibility > 0.5 && elbow.visibility > 0.5) {
-          const angle = Math.round(calculateAngle(hip, shoulder, elbow));
-          
-          currentAngleEl.innerText = angle + '°';
-          if (angle > maxAngle) {
-            maxAngle = angle;
-            peakAngleEl.innerText = maxAngle + '°';
-          }
+    const lShoulder = results.poseLandmarks[11];
+    const lElbow = results.poseLandmarks[13];
+    const lHip = results.poseLandmarks[23];
 
+    let shoulder, elbow, hip;
+
+    // Selecciona automáticamente el brazo que se esté moviendo/elevando
+    if (rElbow && lElbow && rElbow.y < lElbow.y) {
+      shoulder = rShoulder;
+      elbow = rElbow;
+      hip = rHip;
+    } else {
+      shoulder = lShoulder;
+      elbow = lElbow;
+      hip = lHip;
+    }
+
+    if (shoulder && hip && elbow && shoulder.visibility > 0.5 && hip.visibility > 0.5 && elbow.visibility > 0.5) {
+      const angle = Math.round(calculateAngle(hip, shoulder, elbow));
+
+      currentAngleEl.innerText = angle + '°';
+      if (angle > maxAngle) {
+        maxAngle = angle;
+        peakAngleEl.innerText = maxAngle + '°';
+      }
+    }
           canvasCtx.beginPath();
           canvasCtx.moveTo(hip.x * canvasElement.width, hip.y * canvasElement.height);
           canvasCtx.lineTo(shoulder.x * canvasElement.width, shoulder.y * canvasElement.height);
